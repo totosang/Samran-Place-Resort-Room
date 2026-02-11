@@ -1,199 +1,397 @@
 <!DOCTYPE html>
+
 <html lang="th">
+
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Samran Place Resort Room</title>
+
     <script src="https://cdn.tailwindcss.com"></script>
+
     <style>
+
         /* สไตล์สำหรับการทำ Fade นุ่มนวล */
+
         .image-container img {
+
             position: absolute;
+
             top: 0;
+
             left: 0;
+
             width: 100%;
+
             height: 100%;
+
             object-fit: cover;
+
             transition: opacity 2s ease-in-out; /* ปรับความเร็วการ Fade ที่นี่ */
+
         }
+
     </style>
+
 </head>
+
 <body class="bg-slate-50 p-4 md:p-8">
+
     <div class="max-w-6xl mx-auto">
+
         <header class="text-center mb-10">
+
             <h1 class="text-4xl font-extrabold text-indigo-900 mb-2">🏠 Samran Place Resort Room</h1>
+
             <p class="text-gray-500 text-lg">จองง่าย สะดวก พร้อมภาพบรรยากาศที่พักจริง</p>
+
         </header>
+
+
 
         <div id="room-container" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 mb-12"></div>
 
+
+
         <div id="booking-form" class="hidden bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden transition-all animate-in fade-in zoom-in duration-300 mb-10">
+
             <div class="md:flex">
+
                 <div class="md:w-2/5 bg-slate-200 relative overflow-hidden min-h-[400px] image-container" id="modal-slideshow">
+
                     </div>
+
+
 
                 <div class="md:w-3/5 p-6 md:p-10 relative border-l">
+
                     <button onclick="closeForm()" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-2xl z-10">✕</button>
+
                     <div class="mb-6">
+
                         <h2 id="selected-room-name" class="text-3xl font-bold text-indigo-900"></h2>
+
                         <p class="text-indigo-600 font-medium text-lg">ราคาคืนละ <span id="room-price-info"></span> บาท</p>
+
                     </div>
+
+
 
                     <form id="mainForm" onsubmit="handleFormSubmit(event)">
+
                         <input type="hidden" id="roomNumberInput">
+
                         <input type="hidden" id="roomBasePrice">
+
                         
+
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+
                             <div class="space-y-4">
+
                                 <h3 class="font-bold text-gray-700 border-l-4 border-indigo-500 pl-2">👤 ข้อมูลผู้ติดต่อ</h3>
+
                                 <input type="text" id="custName" placeholder="ชื่อ-นามสกุล" class="w-full border-2 p-3 rounded-xl focus:border-indigo-500 outline-none transition-all" required>
+
                                 <input type="tel" id="custTel" placeholder="เบอร์โทรศัพท์" class="w-full border-2 p-3 rounded-xl focus:border-indigo-500 outline-none transition-all" required>
+
                             </div>
+
                             <div class="space-y-4">
+
                                 <h3 class="font-bold text-gray-700 border-l-4 border-indigo-500 pl-2">🗓️ เลือกวันที่เข้าพัก</h3>
+
                                 <div class="space-y-2">
+
                                     <label class="text-xs text-gray-400">เข้าพัก:</label>
+
                                     <input type="date" id="startDateDay" onchange="calculateLogic()" class="w-full border-2 p-2 rounded-xl outline-none focus:border-indigo-500" required>
+
                                     <label class="text-xs text-gray-400">คืนห้อง:</label>
+
                                     <input type="date" id="endDateDay" onchange="calculateLogic()" class="w-full border-2 p-2 rounded-xl outline-none focus:border-indigo-500" required>
+
                                 </div>
+
                             </div>
+
                         </div>
+
+
 
                         <div class="bg-indigo-900 text-white p-6 rounded-2xl flex justify-between items-center shadow-lg transform transition hover:scale-[1.02]">
+
                             <div><p class="text-indigo-200 text-sm italic">สรุปการจอง:</p><p id="night-count" class="font-bold text-xl">0 คืน</p></div>
+
                             <div class="text-right"><p class="text-indigo-200 text-sm">รวมยอดเงิน:</p><p class="text-4xl font-black text-yellow-400"><span id="total-price-display">0</span>.-</p></div>
+
                         </div>
+
+
 
                         <div class="mt-6 p-4 bg-gray-50 rounded-xl border border-dashed border-indigo-300">
+
                             <label class="block text-sm font-bold text-gray-700 mb-2">📸 แนบหลักฐานการโอน (กสิกร: 000-0-00000-0)</label>
+
                             <input type="file" id="slipFile" accept="image/*" class="w-full text-sm cursor-pointer" required>
+
                         </div>
+
                         <button type="submit" class="w-full mt-6 bg-green-600 hover:bg-green-700 text-white py-4 rounded-2xl font-bold text-xl shadow-lg transition-all active:scale-95">ยืนยันการจองผ่าน LINE</button>
+
                     </form>
+
                 </div>
+
             </div>
+
         </div>
+
     </div>
 
+
+
     <script>
+
         // ฟังก์ชันแปลงลิงก์ Drive เป็น Direct Link
+
         const fixDriveUrl = (url) => {
+
             if (url.includes('drive.google.com')) {
+
                 const id = url.split('/d/')[1]?.split('/')[0] || url.split('id=')[1]?.split('&')[0];
+
                 return `https://lh3.googleusercontent.com/d/${id}`;
+
             }
+
             return url;
+
         };
 
+
+
         const roomData = [
+
             { id: 1, name: "Family Room", price: 800, imgs: ["https://drive.google.com/file/d/191EWfXZN8c1XDpy4Q4xSrB_sPVTWuLnX/view", "https://drive.google.com/file/d/1U-7yDvLa8_hlEHsaO07jUzeJdkMeLo_t/view", "https://drive.google.com/file/d/1-CW5XmLaguX6NOe2y0vp9YMD3-K7Is_E/view"]},
+
             { id: 2, name: "VipRoom", price: 600, imgs: ["https://drive.google.com/file/d/1iDDwXGqGuEP05t4m4OGW-qTWPo3rBZT-/view", "https://drive.google.com/file/d/1kO5Cs-K_-k6TVK_fTYwr87i6GEuqleOv/view", "https://drive.google.com/file/d/1hJIe-NWsW0LUW8-l4GQky_dogxttIx-U/view"]},
+
             { id: 3, name: "ห้องนอน", price: 600, imgs: ["https://drive.google.com/file/d/13cb4NAwhaFRMKmcBvFF43oT0dsvLOwPJ/view"]},
+
             { id: 4, name: "ห้องนอน", price: 600, imgs: ["https://drive.google.com/file/d/1dmTwN6Ws4ZYCKyxDIeM1537am-T8NUwq/view"]},
+
             { id: 5, name: "ห้องริมน้ำ", price: 500, imgs: ["https://drive.google.com/file/d/1vBmLPktDu72RXkabWkcASntvE3DbA8GY/view"]},
+
             { id: 6, name: "ห้องริมน้ำ", price: 500, imgs: ["https://drive.google.com/file/d/1r4kpxYql75YhAkCVsZqVJGnbA1Fj6NxZ/view"]},
+
             { id: 7, name: "ห้องนอน", price: 500, imgs: ["https://drive.google.com/file/d/1O1UFP-LzNWypu6yuDG0tmECbNTc-ejW9/view"]},
+
             { id: 8, name: "ห้องนอน", price: 500, imgs: ["https://drive.google.com/file/d/1Nyd7yF9Sa4nVzCaXl-Akd5GAmt4z13dN/view"]},
+
             { id: 9, name: "ห้องนอน", price: 500, imgs: ["https://drive.google.com/file/d/1N7bk3iR04mmNQczpqUH8KiDHls8DvAPw/view"]},
+
             { id: 10, name: "ห้องนอน", price: 500, imgs: ["https://drive.google.com/file/d/1EGIp3JNPrWWoYjDNicFe9SUThglxnNOO/view"]},
+
             { id: 11, name: "ห้องนอน", price: 400, imgs: ["https://drive.google.com/file/d/1ATDpDNTiHB8QXxXPn6JIVLJJ0DxdV7Yl/view"]},
+
             { id: 12, name: "ห้องนอน", price: 400, imgs: ["https://drive.google.com/file/d/1xLn6F5kOi7hRzsX2bUVwujlk0z7JGLqs/view"]}
+
         ];
 
+
+
         function initRooms() {
+
             const container = document.getElementById('room-container');
+
             container.innerHTML = roomData.map(room => `
+
                 <div class="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all border border-gray-100">
+
                     <div class="relative h-48 overflow-hidden image-container" id="slideshow-${room.id}">
+
                         ${room.imgs.map((url, index) => `
+
                             <img src="${fixDriveUrl(url)}" class="${index === 0 ? 'opacity-100' : 'opacity-0'}">
+
                         `).join('')}
+
                     </div>
+
                     <div class="p-4">
+
                         <h3 class="font-bold text-gray-800 text-lg">${room.name} (${room.id})</h3>
+
                         <p class="text-indigo-600 font-bold mb-3">${room.price}.- / คืน</p>
+
                         <button onclick="openBooking(${room.id})" class="w-full py-2 rounded-xl font-bold bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all">จองห้องนี้</button>
+
                     </div>
+
                 </div>
+
             `).join('');
+
             startSlideshows();
+
         }
+
+
 
         function startSlideshows() {
+
             roomData.forEach(room => {
+
                 if (room.imgs.length <= 1) return;
+
                 let currentIdx = 0;
+
                 const imgs = document.querySelectorAll(`#slideshow-${room.id} img`);
+
                 setInterval(() => {
+
                     imgs[currentIdx].style.opacity = 0;
+
                     currentIdx = (currentIdx + 1) % imgs.length;
+
                     imgs[currentIdx].style.opacity = 1;
+
                 }, 4000); // เปลี่ยนทุก 4 วินาที
+
             });
+
         }
+
+
 
         let bookingInterval;
+
         function openBooking(roomId) {
+
             const room = roomData.find(r => r.id === roomId);
+
             const bookingForm = document.getElementById('booking-form');
+
             const modalSlideshow = document.getElementById('modal-slideshow');
+
             
+
             bookingForm.classList.remove('hidden');
+
             document.getElementById('selected-room-name').innerText = `${room.name} (หลังที่ ${room.id})`;
+
             document.getElementById('room-price-info').innerText = room.price;
+
             document.getElementById('roomNumberInput').value = room.id;
+
             document.getElementById('roomBasePrice').value = room.price;
 
+
+
             // สร้างสไลด์ภาพใน Modal
+
             modalSlideshow.innerHTML = room.imgs.map((url, index) => `
+
                 <img src="${fixDriveUrl(url)}" class="${index === 0 ? 'opacity-100' : 'opacity-0'}">
+
             `).join('');
 
+
+
             if (bookingInterval) clearInterval(bookingInterval);
+
             if (room.imgs.length > 1) {
+
                 let mIdx = 0;
+
                 const mImgs = modalSlideshow.querySelectorAll('img');
+
                 bookingInterval = setInterval(() => {
+
                     mImgs[mIdx].style.opacity = 0;
+
                     mIdx = (mIdx + 1) % mImgs.length;
+
                     mImgs[mIdx].style.opacity = 1;
+
                 }, 3500);
+
             }
 
+
+
             // วันที่เริ่มต้น
+
             const today = new Date();
+
             const tomorrow = new Date();
+
             tomorrow.setDate(today.getDate() + 1);
+
             document.getElementById('startDateDay').value = today.toISOString().slice(0,10);
+
             document.getElementById('endDateDay').value = tomorrow.toISOString().slice(0,10);
+
             
+
             calculateLogic();
+
             window.scrollTo({ top: bookingForm.offsetTop - 20, behavior: 'smooth' });
+
         }
+
+
 
         function closeForm() {
+
             document.getElementById('booking-form').classList.add('hidden');
+
             if (bookingInterval) clearInterval(bookingInterval);
+
         }
+
+
 
         function calculateLogic() {
+
             const price = parseInt(document.getElementById('roomBasePrice').value) || 0;
+
             const start = new Date(document.getElementById('startDateDay').value);
+
             const end = new Date(document.getElementById('endDateDay').value);
+
             const diffDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+
             
+
             const total = diffDays > 0 ? diffDays * price : 0;
+
             document.getElementById('night-count').innerText = diffDays > 0 ? `${diffDays} คืน` : "วันที่ผิดพลาด";
+
             document.getElementById('total-price-display').innerText = total.toLocaleString();
+
         }
+
+
 
         function handleFormSubmit(e) {
+
             e.preventDefault();
+
             alert("จองสำเร็จ! กำลังเตรียมส่งข้อมูลไปยังกลุ่ม LINE Samran Place...");
+
         }
 
+
+
         initRooms();
+
     </script>
+
 </body>
+
 </html>
